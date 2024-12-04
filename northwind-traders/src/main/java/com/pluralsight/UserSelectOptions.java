@@ -1,5 +1,7 @@
 package com.pluralsight;
 
+import org.apache.commons.dbcp2.BasicDataSource;
+
 import java.sql.*;
 import java.util.Scanner;
 
@@ -16,36 +18,53 @@ public class UserSelectOptions {
     private static void displayHomeScreen() {
         Scanner scanner = new Scanner(System.in);
         boolean running = true;
-        do {
-            System.out.print("""
-                    What do you want to do?
-                    1) Display all products
-                    2) Display all customers
-                    3) Show all columns in products table
-                    4) Show all columns in customers table
-                    0) Exit
-                    Select an option:\s
-                    """);
-            String input = scanner.nextLine().trim();
-            try {
-                int choice = Integer.parseInt(input);
-                if (choice < 0 || choice > 4) {
-                    System.out.println("You must enter a valid number (0, 1, 2, 3, 4)...");
-                    continue;
+        /*
+        Every driver has it’s own way to instantiate a DataSource
+            - You will need to consult the documentation for your specific
+                driver
+            - In MySQL, we can instantiate and configure a
+                DataSource as shown below
+         */
+        BasicDataSource dataSource = new BasicDataSource();
+        dataSource.setUrl(url);
+        dataSource.setUsername(user);
+        dataSource.setPassword(password);
+        try (Connection connection = dataSource.getConnection()) {
+            do {
+                System.out.print("""
+                        What do you want to do?
+                        1) Display all products
+                        2) Display all customers
+                        3) Display all categories
+                        4) Show all columns in products table
+                        5) Show all columns in customers table
+                        0) Exit
+                        Select an option:\s
+                        """);
+                String input = scanner.nextLine().trim();
+                try {
+                    int choice = Integer.parseInt(input);
+                    if (choice < 0 || choice > 5) {
+                        System.out.println("You must enter a valid number (0 - 5)...");
+                        continue;
+                    }
+                    running = handleChoice(choice, connection);
+                } catch (NumberFormatException e) {
+                    System.out.println("You must enter an integer...");
                 }
-                running = handleChoice(choice);
-            } catch (NumberFormatException e) {
-                System.out.println("You must enter an integer...");
-            }
-        } while (running);
+            } while (running);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    private static boolean handleChoice(int choice) {
+    private static boolean handleChoice(int choice, Connection connection) {
         switch (choice) {
             case 1 -> displayProducts();
             case 2 -> displayCustomers();
-            case 3 -> showTableColumns("products");
-            case 4 -> showTableColumns("customers");
+            case 3 -> displayCategories(connection);
+            case 4 -> showTableColumns("products");
+            case 5 -> showTableColumns("customers");
             case 0 -> {
                 System.out.println("Exiting...");
                 return false;
@@ -54,6 +73,24 @@ public class UserSelectOptions {
         return true;
     }
 
+    private static void displayCategories(Connection connection) {
+        String query = "select CategoryID as id, CategoryName as name " +
+                "from categories " +
+                "order by id";
+        try {
+            PreparedStatement preparedStatement = connection.prepareStatement(query);
+            preparedStatement.execute();
+            ResultSet rs = preparedStatement.getResultSet();
+            System.out.print("""
+                    Category ID\t\t\tCategory Name
+                    """);
+            while (rs.next()) {
+                System.out.printf("%d\t\t\t\t\t%s\n", rs.getInt(1), rs.getString(2));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
 
     /*
@@ -105,7 +142,7 @@ public class UserSelectOptions {
             ResultSetMetaData rsMetaData = rs.getMetaData();
             System.out.println("List of column names in the current table: ");
             int count = rsMetaData.getColumnCount();
-            for (int i = 1; i <= count ; i++) {
+            for (int i = 1; i <= count; i++) {
                 System.out.println(rsMetaData.getColumnName(i) + " - type: " + rsMetaData.getColumnType(i));
             }
         } catch (SQLException e) {
@@ -124,8 +161,8 @@ public class UserSelectOptions {
                     """ + "-".repeat(121) + "\n", "Contact Name", "Company Name", "City", "Country", "Phone");
             while (rs.next()) {
                 System.out.printf("""
-                        %-25s%36s%20s%20s%20s
-                        """, rs.getString("ContactName"),
+                                %-25s%36s%20s%20s%20s
+                                """, rs.getString("ContactName"),
                         rs.getString("CompanyName"),
                         rs.getString("City"),
                         rs.getString("Country"),
