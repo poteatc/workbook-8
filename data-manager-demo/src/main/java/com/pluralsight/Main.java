@@ -1,10 +1,8 @@
 package com.pluralsight;
 
-import com.pluralsight.dealership.Vehicle;
+import com.pluralsight.model.Vehicle;
 import org.apache.commons.dbcp2.BasicDataSource;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.List;
 
 public class Main {
@@ -14,7 +12,8 @@ public class Main {
         dataSource.setUsername(args[0]);
         dataSource.setPassword(args[1]);
 
-        DataManager dataManager = new DataManager(dataSource);
+        VehicleDAOMySqlImpl dataManager = new VehicleDAOMySqlImpl(dataSource);
+        //DealershipDAOMySqlImpl dealershipDAOMySql = new Dealer
 
         List<Vehicle> vehicles = dataManager.getAllVehicles();
 

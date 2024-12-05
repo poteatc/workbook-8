@@ -1,6 +1,6 @@
 package com.pluralsight;
 
-import com.pluralsight.dealership.Vehicle;
+import com.pluralsight.model.Vehicle;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -10,13 +10,19 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DataManager {
+public class VehicleDAOMySqlImpl implements VehicleDAO {
     private DataSource dataSource;
 
-    public DataManager(DataSource dataSource) {
+    public VehicleDAOMySqlImpl(DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
+    @Override
+    public Vehicle findVehicleByVin() {
+        return null;
+    }
+
+    @Override
     public List<Vehicle> getAllVehicles() {
         List<Vehicle> vehicles = new ArrayList<>();
 

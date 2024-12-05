@@ -1,4 +1,4 @@
-package com.pluralsight.dealership;
+package com.pluralsight.model;
 
 public class Vehicle {
     private final String vin;
